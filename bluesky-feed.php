@@ -217,7 +217,7 @@ class BlueSkyFeedScroller
                                     class="regular-text"
                                     style="margin-right: 10px;"
                                 >
-                                <p class="description">Enter your BlueSky password</p>
+                                <p class="description">Enter your BlueSky password, make sure to use an App Password from https://bsky.app/settings/app-passwords</p>
                                 <button type="button" id="test-bluesky-connection" class="button button-secondary">
                                     <span class="dashicons dashicons-superhero" style="margin-top: 4px;"></span>
                                     Test Connection
