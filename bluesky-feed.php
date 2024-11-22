@@ -19,17 +19,14 @@ class BlueSkyFeedScroller
 {
     private $options;
 
-    public function __construct()
-    {
+    public function __construct() {
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_action('wp_ajax_test_bluesky_connection', array($this, 'handle_test_connection'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_action('wp_ajax_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
         add_action('wp_ajax_nopriv_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
         add_action('wp_ajax_clear_bluesky_cache', array($this, 'handle_clear_cache'));
-
         add_shortcode('bluesky_feed', array($this, 'render_feed_shortcode'));
     }
 
@@ -89,38 +86,183 @@ class BlueSkyFeedScroller
         wp_send_json_success();
     }
 
-    public function create_admin_page()
-    {
+    public function create_admin_page() {
         $this->options = get_option('bluesky_feed_options');
         ?>
         <div class="wrap">
             <h1>BlueSky Feed Settings</h1>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('bluesky_feed_option_group');
-                do_settings_sections('bluesky-feed-settings');
-                submit_button();
-                ?>
-            </form>
 
-            <!-- Test Connection Section -->
-            <div class="test-connection"
-                 style="margin-top: 20px; padding: 20px; background: #fff; border: 1px solid #ccc;">
-                <h2>Connection Test</h2>
-                <button type="button" id="test-bluesky-connection" class="button button-primary">
-                    Test BlueSky Connection
+            <!-- How To Section -->
+            <div class="card" style="max-width: 800px; margin-bottom: 20px;">
+                <h2><span class="dashicons dashicons-info-outline" style="font-size: 24px; margin-right: 10px;"></span>Quick Start Guide</h2>
+                <p>Follow these steps to set up your BlueSky Feed:</p>
+                <ol style="list-style-type: decimal; margin-left: 20px;">
+                    <li>Enter your BlueSky credentials (email/handle and password)</li>
+                    <li>Add hashtags you want to track (without the # symbol)</li>
+                    <li>Click "Test Connection" to verify your credentials</li>
+                    <li>Choose your preferred scroll direction (horizontal or vertical)</li>
+                    <li>Use the shortcode <code>[bluesky_feed]</code> to display the feed on any page</li>
+                </ol>
+            </div>
+
+            <div class="card" style="max-width: 800px;">
+                <form method="post" action="options.php">
+                    <?php settings_fields('bluesky_feed_option_group'); ?>
+
+                    <!-- Authentication Section -->
+                    <div class="form-section">
+                        <h2><span class="dashicons dashicons-lock" style="font-size: 24px; margin-right: 10px;"></span>Authentication</h2>
+                        <div class="form-table">
+                            <div class="form-field" style="margin-bottom: 20px;">
+                                <label for="bluesky_identifier" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                    BlueSky Identifier (email/handle)
+                                </label>
+                                <input
+                                    type="text"
+                                    id="bluesky_identifier"
+                                    name="bluesky_feed_options[bluesky_identifier]"
+                                    value="<?php echo esc_attr(isset($this->options['bluesky_identifier']) ? $this->options['bluesky_identifier'] : ''); ?>"
+                                    class="regular-text"
+                                    style="margin-right: 10px;"
+                                >
+                                <p class="description">Enter your BlueSky email or handle (e.g., user.bsky.social)</p>
+                            </div>
+
+                            <div class="form-field" style="margin-bottom: 20px;">
+                                <label for="bluesky_password" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                    BlueSky Password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="bluesky_password"
+                                    name="bluesky_feed_options[bluesky_password]"
+                                    value="<?php echo esc_attr(isset($this->options['bluesky_password']) ? $this->options['bluesky_password'] : ''); ?>"
+                                    class="regular-text"
+                                    style="margin-right: 10px;"
+                                >
+                                <button type="button" id="test-bluesky-connection" class="button button-secondary">
+                                    <span class="dashicons dashicons-superhero" style="margin-top: 4px;"></span>
+                                    Test Connection
+                                </button>
+                                <span id="connection-result" style="margin-left: 10px; display: inline-block;"></span>
+                                <p class="description">Enter your BlueSky password</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feed Configuration Section -->
+                    <div class="form-section" style="margin-top: 30px;">
+                        <h2><span class="dashicons dashicons-tag" style="font-size: 24px; margin-right: 10px;"></span>Feed Configuration</h2>
+                        <div class="form-table">
+                            <div class="form-field" style="margin-bottom: 20px;">
+                                <label for="bluesky_hashtags" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                    Hashtags to Track
+                                </label>
+                                <textarea
+                                    id="bluesky_hashtags"
+                                    name="bluesky_feed_options[hashtags]"
+                                    rows="4"
+                                    class="large-text code"
+                                    placeholder="Enter one hashtag per line (without #)"
+                                ><?php echo esc_textarea(isset($this->options['hashtags']) ? $this->options['hashtags'] : ''); ?></textarea>
+                                <p class="description">Enter hashtags to track, one per line, without the # symbol (e.g., devoxx)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layout Settings Section -->
+                    <div class="form-section" style="margin-top: 30px;">
+                        <h2><span class="dashicons dashicons-layout" style="font-size: 24px; margin-right: 10px;"></span>Layout Settings</h2>
+                        <div class="form-table">
+                            <div class="form-field">
+                                <label for="scroll_direction" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                    Scroll Direction
+                                </label>
+                                <select
+                                    id="scroll_direction"
+                                    name="bluesky_feed_options[scroll_direction]"
+                                    class="regular-text"
+                                >
+                                    <option value="horizontal" <?php selected(isset($this->options['scroll_direction']) ? $this->options['scroll_direction'] : '', 'horizontal'); ?>>
+                                        Horizontal Scroll
+                                    </option>
+                                    <option value="vertical" <?php selected(isset($this->options['scroll_direction']) ? $this->options['scroll_direction'] : '', 'vertical'); ?>>
+                                        Vertical Scroll
+                                    </option>
+                                </select>
+                                <p class="description">Choose how posts will be displayed and scrolled</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php submit_button('Save Settings'); ?>
+                </form>
+            </div>
+
+            <!-- Cache Control Section -->
+            <div class="card" style="max-width: 800px; margin-top: 20px;">
+                <h2><span class="dashicons dashicons-performance" style="font-size: 24px; margin-right: 10px;"></span>Cache Management</h2>
+                <p>Clear the BlueSky cache if you're experiencing issues with the feed or after changing settings:</p>
+                <button type="button" id="clear-bluesky-cache" class="button button-secondary">
+                    <span class="dashicons dashicons-trash" style="margin-top: 4px;"></span>
+                    Clear Cache
                 </button>
-                <span id="connection-result" style="margin-left: 10px; display: inline-block;"></span>
+                <span id="cache-clear-result" style="margin-left: 10px;"></span>
+            </div>
+
+            <!-- Shortcode Help Section -->
+            <div class="card" style="max-width: 800px; margin-top: 20px;">
+                <h2><span class="dashicons dashicons-shortcode" style="font-size: 24px; margin-right: 10px;"></span>Using the Shortcode</h2>
+                <p>To display the BlueSky feed on any page or post, use this shortcode:</p>
+                <code style="background: #f0f0f1; padding: 10px; display: inline-block; margin: 10px 0;">[bluesky_feed]</code>
+            </div>
+
+            <!-- GitHub Repository Section -->
+            <div class="card" style="max-width: 800px; margin-top: 20px;">
+                <h2><span class="dashicons dashicons-github" style="font-size: 24px; margin-right: 10px;"></span>Contributing & Support</h2>
+                <p>This plugin is open source! Find the code, report issues, or contribute on GitHub:</p>
+                <p><a href="https://github.com/stephanj/blueskyFeedWordpressPlugin" target="_blank" class="button button-secondary">
+                        <span class="dashicons dashicons-external" style="margin-top: 4px;"></span>
+                        View on GitHub
+                    </a></p>
             </div>
         </div>
 
+        <style>
+            .card {
+                background: white;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .form-section {
+                border-bottom: 1px solid #eee;
+                padding-bottom: 20px;
+            }
+            .form-section:last-child {
+                border-bottom: none;
+            }
+            .form-section h2 {
+                display: flex;
+                align-items: center;
+                color: #1d2327;
+                font-size: 1.3em;
+                margin-bottom: 1em;
+            }
+            .description {
+                color: #646970;
+                font-style: italic;
+                margin-top: 4px;
+            }
+        </style>
+
         <script type="text/javascript">
             jQuery(document).ready(function ($) {
+                // Test Connection Handler
                 $('#test-bluesky-connection').on('click', function () {
                     const button = $(this);
                     const resultSpan = $('#connection-result');
 
-                    // Disable button and show loading
                     button.prop('disabled', true);
                     resultSpan.html('<span style="color:#666">Testing connection...</span>');
 
@@ -147,16 +289,11 @@ class BlueSkyFeedScroller
                         }
                     });
                 });
-            });
-        </script>
 
-        <div class="clear-cache" style="margin-top: 20px;">
-            <button type="button" id="clear-bluesky-cache" class="button button-secondary">Clear BlueSky Cache</button>
-            <span id="cache-clear-result"></span>
-        </div>
-        <script>
-            jQuery(document).ready(function ($) {
+                // Cache Clear Handler
                 $('#clear-bluesky-cache').on('click', function () {
+                    const resultSpan = $('#cache-clear-result');
+
                     $.ajax({
                         url: ajaxurl,
                         type: 'POST',
@@ -164,20 +301,23 @@ class BlueSkyFeedScroller
                             action: 'clear_bluesky_cache',
                             security: '<?php echo wp_create_nonce('clear_bluesky_cache'); ?>'
                         },
-                        success: function (_response) {
-                            $('#cache-clear-result').html('<span style="color:green">Cache cleared!</span>');
+                        success: function (response) {
+                            if (response.success) {
+                                resultSpan.html('<span style="color:green">✓ Cache cleared successfully!</span>');
+                                setTimeout(() => {
+                                    resultSpan.html('');
+                                }, 3000);
+                            }
                         }
                     });
                 });
             });
         </script>
-
         <?php
     }
 
     public function handle_test_connection()
     {
-
         error_log('BlueSky Test Connection Started');
 
         if (!check_ajax_referer('bluesky_test_connection', 'security', false)) {
@@ -225,15 +365,14 @@ class BlueSkyFeedScroller
         }
     }
 
-    public function page_init()
-    {
+    public function page_init() {
         register_setting(
             'bluesky_feed_option_group',
             'bluesky_feed_options',
             array($this, 'sanitize')
         );
 
-        // Add Authentication Section
+        // Authentication fields remain the same
         add_settings_section(
             'bluesky_auth_section',
             'BlueSky Authentication',
@@ -241,10 +380,9 @@ class BlueSkyFeedScroller
             'bluesky-feed-settings'
         );
 
-        // Add Authentication Fields
         add_settings_field(
             'bluesky_identifier',
-            'BlueSky Identifier (email/handle)',
+            'BlueSky Identifier',
             array($this, 'identifier_callback'),
             'bluesky-feed-settings',
             'bluesky_auth_section'
@@ -258,26 +396,12 @@ class BlueSkyFeedScroller
             'bluesky_auth_section'
         );
 
-        // Existing settings section
+        // Hashtags section (removed accounts section)
         add_settings_section(
             'bluesky_feed_setting_section',
             'Feed Settings',
             array($this, 'section_info'),
             'bluesky-feed-settings'
-        );
-
-        register_setting(
-            'bluesky_feed_option_group',
-            'bluesky_feed_options',
-            array($this, 'sanitize')
-        );
-
-        add_settings_field(
-            'accounts',
-            'BlueSky Accounts',
-            array($this, 'accounts_callback'),
-            'bluesky-feed-settings',
-            'bluesky_feed_setting_section'
         );
 
         add_settings_field(
@@ -288,7 +412,7 @@ class BlueSkyFeedScroller
             'bluesky_feed_setting_section'
         );
 
-        // Add Layout Section
+        // Layout settings remain the same
         add_settings_section(
             'bluesky_layout_section',
             'Layout Settings',
@@ -296,7 +420,6 @@ class BlueSkyFeedScroller
             'bluesky-feed-settings'
         );
 
-        // Add Scroll Direction Field
         add_settings_field(
             'scroll_direction',
             'Scroll Direction',
@@ -353,8 +476,7 @@ class BlueSkyFeedScroller
         <?php
     }
 
-    public function sanitize($input)
-    {
+    public function sanitize($input) {
         $new_input = array();
 
         if (isset($input['bluesky_identifier']))
@@ -363,15 +485,12 @@ class BlueSkyFeedScroller
         if (isset($input['bluesky_password']))
             $new_input['bluesky_password'] = sanitize_text_field($input['bluesky_password']);
 
-        if (isset($input['accounts']))
-            $new_input['accounts'] = sanitize_textarea_field($input['accounts']);
-
         if (isset($input['hashtags']))
             $new_input['hashtags'] = sanitize_textarea_field($input['hashtags']);
 
-        if (isset($input['scroll_direction'])) {
+        if (isset($input['scroll_direction']))
             $new_input['scroll_direction'] = sanitize_text_field($input['scroll_direction']);
-        }
+
         return $new_input;
     }
 
