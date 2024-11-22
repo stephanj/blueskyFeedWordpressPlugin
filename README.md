@@ -14,6 +14,12 @@ A WordPress plugin that allows you to display BlueSky posts in Wordpress based o
 - Automatic post updates
 - Clean, modern UI
 
+## ⚙️ Admin screen
+
+![admin-1](https://github.com/user-attachments/assets/1e6f6cf4-3667-470e-9589-9a353ef3bc7a)
+![admin-2](https://github.com/user-attachments/assets/f2bdd753-2a57-4b5d-8220-91c7386a7133)
+
+
 ## 📋 Requirements
 
 - WordPress 5.0 or higher
