@@ -19,18 +19,46 @@ class BlueSkyFeedScroller
 {
     private $options;
 
-    public function __construct() {
-	    wp_enqueue_style('dashicons');
-        add_action('admin_menu', array($this, 'add_plugin_page'));
-        add_action('admin_init', array($this, 'page_init'));
-        add_action('admin_head', array($this, 'add_menu_icon_styles'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
-        add_action('wp_ajax_test_bluesky_connection', array($this, 'handle_test_connection'));
-        add_action('wp_ajax_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
-        add_action('wp_ajax_nopriv_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
-        add_action('wp_ajax_clear_bluesky_cache', array($this, 'handle_clear_cache'));
-        add_shortcode('bluesky_feed', array($this, 'render_feed_shortcode'));
-    }
+	public function __construct() {
+		$this->plugin_path = plugin_dir_path(__FILE__);
+		$this->options = get_option('bluesky_feed_options');
+
+		// Admin hooks
+		add_action('admin_menu', array($this, 'add_plugin_page'));
+		add_action('admin_init', array($this, 'page_init'));
+		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+
+		// Frontend hooks
+		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
+
+		// AJAX handlers
+		add_action('wp_ajax_test_bluesky_connection', array($this, 'handle_test_connection'));
+		add_action('wp_ajax_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
+		add_action('wp_ajax_nopriv_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
+		add_action('wp_ajax_clear_bluesky_cache', array($this, 'handle_clear_cache'));
+
+        // Dash icons for next/prev buttons
+		wp_enqueue_style( 'dashicons' );
+
+        // The shortcode
+		add_shortcode('bluesky_feed', array($this, 'render_feed_shortcode'));
+	}
+
+	public function enqueue_frontend_assets() {
+		global $post;
+
+		// Only enqueue if shortcode is present
+		if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'bluesky_feed')) {
+			wp_enqueue_style('bluesky-feed-style', plugins_url('css/bluesky-feed-v2.css', __FILE__));
+			wp_enqueue_script('bluesky-feed-script', plugins_url('js/bluesky-feed-v3.js', __FILE__),
+				array('jquery'), '1.0.0', true);
+
+			wp_localize_script('bluesky-feed-script', 'blueSkyAjax', array(
+				'ajaxurl' => admin_url('admin-ajax.php'),
+				'nonce' => wp_create_nonce('bluesky_feed_nonce')
+			));
+		}
+	}
 
     private function debug_log($message, $data = null) {
         $log_file = dirname(__FILE__) . '/debug.log';
@@ -200,6 +228,26 @@ class BlueSkyFeedScroller
                                     placeholder="Enter one hashtag per line (without #)"
                                 ><?php echo esc_textarea(isset($this->options['hashtags']) ? $this->options['hashtags'] : ''); ?></textarea>
                                 <p class="description">Enter hashtags to track, one per line, without the # symbol (e.g., devoxx)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blacklist Section -->
+                    <div class="form-section" style="margin-top: 30px;">
+                        <h2><span class="dashicons dashicons-dismiss" style="font-size: 24px; margin-right: 10px;"></span>Account Blacklist</h2>
+                        <div class="form-table">
+                            <div class="form-field" style="margin-bottom: 20px;">
+                                <label for="bluesky_blacklist" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                    Blacklisted Accounts
+                                </label>
+                                <textarea
+                                    id="bluesky_blacklist"
+                                    name="bluesky_feed_options[blacklisted_accounts]"
+                                    rows="4"
+                                    class="large-text code"
+                                    placeholder="Enter handles to blacklist (one per line)"
+                                ><?php echo esc_textarea(isset($this->options['blacklisted_accounts']) ? $this->options['blacklisted_accounts'] : ''); ?></textarea>
+                                <p class="description">Enter handles of accounts whose posts you want to exclude from your feed (one per line)</p>
                             </div>
                         </div>
                     </div>
@@ -461,6 +509,22 @@ class BlueSkyFeedScroller
             'bluesky-feed-settings',
             'bluesky_layout_section'
         );
+
+	    // Add Blacklist section
+	    add_settings_section(
+		    'bluesky_blacklist_section',
+		    'Account Blacklist',
+		    array($this, 'blacklist_section_info'),
+		    'bluesky-feed-settings'
+	    );
+
+	    add_settings_field(
+		    'blacklisted_accounts',
+		    'Blacklisted Accounts',
+		    array($this, 'blacklisted_accounts_callback'),
+		    'bluesky-feed-settings',
+		    'bluesky_blacklist_section'
+	    );
     }
 
     public function layout_section_info() {
@@ -471,15 +535,34 @@ class BlueSkyFeedScroller
         $value = isset($this->options['scroll_direction']) ?
             esc_attr($this->options['scroll_direction']) : 'horizontal';
         ?>
-        <select name="bluesky_feed_options[scroll_direction]" class="regular-text">
-            <option value="horizontal" <?php selected($value, 'horizontal'); ?>>Horizontal Scroll</option>
-            <option value="vertical" <?php selected($value, 'vertical'); ?>>Vertical Scroll</option>
-        </select>
-        <p class="description">Choose how posts will be displayed and scrolled</p>
+            <label>
+                <select name="bluesky_feed_options[scroll_direction]" class="regular-text">
+                    <option value="horizontal" <?php selected($value, 'horizontal'); ?>>Horizontal Scroll</option>
+                    <option value="vertical" <?php selected($value, 'vertical'); ?>>Vertical Scroll</option>
+                </select>
+            </label>
+            <p class="description">Choose how posts will be displayed and scrolled</p>
         <?php
     }
 
-    public function auth_section_info()
+	public function blacklist_section_info() {
+		echo 'Enter BlueSky accounts to exclude from the feed (one per line):';
+	}
+
+	public function blacklisted_accounts_callback() {
+		$value = isset($this->options['blacklisted_accounts']) ? esc_attr($this->options['blacklisted_accounts']) : ''; ?>
+        <label>
+            <textarea
+                    name="bluesky_feed_options[blacklisted_accounts]"
+                    rows="5"
+                    cols="50"
+                    placeholder="Enter handles to blacklist (one per line)"><?php echo $value; ?></textarea>
+        </label>
+        <p class="description">Posts from these accounts will be excluded from your feed</p>
+		<?php
+	}
+
+	public function auth_section_info()
     {
         echo 'Enter your BlueSky authentication credentials:';
     }
@@ -489,10 +572,12 @@ class BlueSkyFeedScroller
         $value = isset($this->options['bluesky_identifier']) ?
             esc_attr($this->options['bluesky_identifier']) : '';
         ?>
-        <input type="text"
-               name="bluesky_feed_options[bluesky_identifier]"
-               value="<?php echo $value; ?>"
-               class="regular-text">
+        <label>
+            <input type="text"
+                   name="bluesky_feed_options[bluesky_identifier]"
+                   value="<?php echo $value; ?>"
+                   class="regular-text">
+        </label>
         <p class="description">Enter your BlueSky email or handle</p>
         <?php
     }
@@ -502,10 +587,12 @@ class BlueSkyFeedScroller
         $value = isset($this->options['bluesky_password']) ?
             esc_attr($this->options['bluesky_password']) : '';
         ?>
-        <input type="password"
-               name="bluesky_feed_options[bluesky_password]"
-               value="<?php echo $value; ?>"
-               class="regular-text">
+        <label>
+            <input type="password"
+                   name="bluesky_feed_options[bluesky_password]"
+                   value="<?php echo $value; ?>"
+                   class="regular-text">
+        </label>
         <p class="description">Enter your BlueSky password</p>
         <?php
     }
@@ -525,7 +612,10 @@ class BlueSkyFeedScroller
         if (isset($input['scroll_direction']))
             $new_input['scroll_direction'] = sanitize_text_field($input['scroll_direction']);
 
-        return $new_input;
+	    if (isset($input['blacklisted_accounts']))
+		    $new_input['blacklisted_accounts'] = sanitize_textarea_field($input['blacklisted_accounts']);
+
+	    return $new_input;
     }
 
     public function section_info()
@@ -533,94 +623,96 @@ class BlueSkyFeedScroller
         echo 'Enter your BlueSky feed settings below:';
     }
 
-    public function accounts_callback()
-    {
-        $value = isset($this->options['accounts']) ? esc_attr($this->options['accounts']) : '';
-        ?>
-        <textarea name="bluesky_feed_options[accounts]" rows="5" cols="50"><?php echo $value; ?></textarea>
-        <p class="description">Enter BlueSky accounts (one per line)</p>
-        <?php
-    }
-
     public function hashtags_callback()
     {
-        $value = isset($this->options['hashtags']) ? esc_attr($this->options['hashtags']) : '';
-        ?>
-        <textarea name="bluesky_feed_options[hashtags]" rows="5" cols="50"><?php echo $value; ?></textarea>
+        $value = isset($this->options['hashtags']) ? esc_attr($this->options['hashtags']) : ''; ?>
+        <label>
+            <textarea name="bluesky_feed_options[hashtags]" rows="5" cols="50"><?php echo $value; ?></textarea>
+        </label>
         <p class="description">Enter hashtags to track (one per line, without #)</p>
         <?php
     }
 
-    public function enqueue_frontend_assets()
-    {
-        wp_enqueue_style(
-            'bluesky-feed-style',
-            plugins_url('css/bluesky-feed-v2.css', __FILE__),
-            array(),
-            '1.0.0'
-        );
+	private function fetch_bluesky_posts($accounts, $hashtags)
+	{
+		$this->debug_log('Starting fetch_bluesky_posts');
+		$this->debug_log('Accounts:', $accounts);
+		$this->debug_log('Hashtags:', $hashtags);
 
-        wp_enqueue_script(
-            'bluesky-feed-script',
-            plugins_url('js/bluesky-feed-v3.js', __FILE__),
-            array('jquery'),
-            '1.0.0',
-            true
-        );
-    }
+		try {
+			error_log('BlueSky Feed: Fetching posts started');
 
-    private function fetch_bluesky_posts($accounts, $hashtags)
-    {
-        $this->debug_log('Starting fetch_bluesky_posts');
-        $this->debug_log('Accounts:', $accounts);
-        $this->debug_log('Hashtags:', $hashtags);
+			require_once plugin_dir_path(__FILE__) . 'bluesky-integration.php';
+			$api = new BlueSkyAPI();
 
-        try {
-            error_log('BlueSky Feed: Fetching posts started');
+			if (!$api->authenticate()) {
+				error_log('BlueSky Feed: Authentication failed');
+				throw new Exception('Failed to authenticate with BlueSky');
+			}
 
-            require_once plugin_dir_path(__FILE__) . 'bluesky-integration.php';
-            $api = new BlueSkyAPI();
+			$posts = array();
 
-            if (!$api->authenticate()) {
-                error_log('BlueSky Feed: Authentication failed');
-                throw new Exception('Failed to authenticate with BlueSky');
-            }
+			// Get blacklisted accounts and clean them
+			$blacklisted_accounts = array();
+			if (isset($this->options['blacklisted_accounts'])) {
+				$blacklisted_accounts = array_map('trim', explode("\n", $this->options['blacklisted_accounts']));
+				$blacklisted_accounts = array_filter($blacklisted_accounts); // Remove empty lines
+				$this->debug_log('Blacklisted accounts:', $blacklisted_accounts);
+			}
 
-            $posts = array();
+			// Fetch posts for each account
+			foreach ($accounts as $account) {
+				if (!empty($account)) {
+					error_log('BlueSky Feed: Fetching posts for account: ' . $account);
+					$account_posts = $api->get_user_posts($account);
+					$posts = array_merge($posts, $account_posts);
+				}
+			}
 
-            // Fetch posts for each account
-            foreach ($accounts as $account) {
-                if (!empty($account)) {
-                    error_log('BlueSky Feed: Fetching posts for account: ' . $account);
-                    $account_posts = $api->get_user_posts($account);
-                    $posts = array_merge($posts, $account_posts);
-                }
-            }
+			// Fetch posts for each hashtag
+			foreach ($hashtags as $hashtag) {
+				if (!empty($hashtag)) {
+					error_log('BlueSky Feed: Fetching posts for hashtag: ' . $hashtag);
+					$hashtag_posts = $api->search_posts($hashtag);
+					$posts = array_merge($posts, $hashtag_posts);
+				}
+			}
 
-            // Fetch posts for each hashtag
-            foreach ($hashtags as $hashtag) {
-                if (!empty($hashtag)) {
-                    error_log('BlueSky Feed: Fetching posts for hashtag: ' . $hashtag);
-                    $hashtag_posts = $api->search_posts($hashtag);
-                    $posts = array_merge($posts, $hashtag_posts);
-                }
-            }
+			// Filter out posts from blacklisted accounts
+			if (!empty($blacklisted_accounts)) {
+				$posts = array_filter($posts, function($post) use ($blacklisted_accounts) {
 
-            // Sort posts by date (latest first)
-            usort($posts, function($a, $b) {
-                $date_a = strtotime($a['createdAt']);
-                $date_b = strtotime($b['createdAt']);
-                return $date_b - $date_a; // Reverse chronological order
-            });
+					// Compare full handles directly
+					$author_handle = $post['author']['handle'];
+					foreach ($blacklisted_accounts as $blacklisted) {
+						$blacklisted = trim($blacklisted);
+						$this->debug_log('Comparing blacklisted account: \"' . $blacklisted . '\" with post author: \"' . $author_handle . '\"');
+						if (strcasecmp($author_handle, $blacklisted) === 0) {
+							$this->debug_log('Filtering out post from blacklisted account:', $author_handle);
+							return false;
+						}
+					}
+					return true;
+				});
+			} else {
+				$this->debug_log('No blacklisted accounts found');
+			}
 
-            error_log('BlueSky Feed: Total posts fetched: ' . count($posts));
-            return $posts;
+			// Sort posts by date (latest first)
+			usort($posts, function($a, $b) {
+				$date_a = strtotime($a['createdAt']);
+				$date_b = strtotime($b['createdAt']);
+				return $date_b - $date_a; // Reverse chronological order
+			});
 
-        } catch (Exception $e) {
-            error_log('BlueSky Feed Error in fetch_bluesky_posts: ' . $e->getMessage());
-            throw $e;
-        }
-    }
+			error_log('BlueSky Feed: Total posts fetched after filtering: ' . count($posts));
+			return array_values($posts); // Reset array keys after filtering
+
+		} catch (Exception $e) {
+			error_log('BlueSky Feed Error in fetch_bluesky_posts: ' . $e->getMessage());
+			throw $e;
+		}
+	}
 
     private function render_post($post) {
         try {
@@ -739,9 +831,9 @@ class BlueSkyFeedScroller
         $text = wp_specialchars_decode($text, ENT_QUOTES);
 
         // Fix the &#039; that appears as literal text (not as an entity)
-        $text = preg_replace('/\&\#039;/', "'", $text);  // Handle proper HTML entity
-        $text = preg_replace('/\#039;/', "'", $text);    // Handle the broken version
-        $text = preg_replace('/\&\#39;/', "'", $text);   // Handle another common variant
+        $text = preg_replace('/&#039;/', "'", $text);  // Handle proper HTML entity
+        $text = preg_replace('/#039;/', "'", $text);    // Handle the broken version
+        $text = preg_replace('/&#39;/', "'", $text);   // Handle another common variant
 
         // Now escape HTML, but preserve our formatted elements
         $text = esc_html($text);
