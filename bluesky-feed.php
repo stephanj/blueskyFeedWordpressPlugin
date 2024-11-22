@@ -22,6 +22,7 @@ class BlueSkyFeedScroller
     public function __construct() {
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
+        add_action('admin_head', array($this, 'add_menu_icon_styles'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_action('wp_ajax_test_bluesky_connection', array($this, 'handle_test_connection'));
         add_action('wp_ajax_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
@@ -43,6 +44,50 @@ class BlueSkyFeedScroller
             "[$timestamp] $message\n",
             FILE_APPEND
         );
+    }
+
+    public function add_plugin_page() {
+        add_menu_page(
+            'BlueSky Feed Settings',
+            'BlueSky Feed',
+            'manage_options',
+            'bluesky-feed-settings',
+            array($this, 'create_admin_page'),
+            'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" fill="#a7aaad" viewBox="0 0 512 512"><path d="M111.8 62.2C170.2 105.9 233 194.7 256 242.4c23-47.6 85.8-136.4 144.2-180.2c42.1-31.6 110.3-56 110.3 21.8c0 15.5-8.9 130.5-14.1 149.2C478.2 298 412 314.6 353.1 304.5c102.9 17.5 129.1 75.5 72.5 133.5c-107.4 110.2-154.3-27.6-166.3-62.9l0 0c-1.7-4.9-2.6-7.8-3.3-7.8s-1.6 3-3.3 7.8l0 0c-12 35.3-59 173.1-166.3 62.9c-56.5-58-30.4-116 72.5-133.5C100 314.6 33.8 298 15.7 233.1C10.4 214.4 1.5 99.4 1.5 83.9c0-77.8 68.2-53.4 110.3-21.8z"/></svg>')
+        );
+    }
+
+    public function add_menu_icon_styles() {
+        ?>
+        <style>
+            /* Style the menu icon */
+            .toplevel_page_bluesky-feed-settings .wp-menu-image img {
+                width: 20px;
+                height: 20px;
+                padding: 7px 0;
+                opacity: 0.6;
+            }
+
+            /* Style for hover and active states */
+            .toplevel_page_bluesky-feed-settings:hover .wp-menu-image img,
+            .toplevel_page_bluesky-feed-settings.current .wp-menu-image img {
+                opacity: 1;
+            }
+
+            /* Fix for dark mode */
+            body.admin-color-light .toplevel_page_bluesky-feed-settings .wp-menu-image img path {
+                fill: #1d2327;
+            }
+            body.admin-color-dark .toplevel_page_bluesky-feed-settings .wp-menu-image img path {
+                fill: #ffffff;
+            }
+
+            /* Handle other admin color schemes */
+            .wp-admin .toplevel_page_bluesky-feed-settings .wp-menu-image img path {
+                fill: currentColor;
+            }
+        </style>
+        <?php
     }
 
     public function ajax_load_more_posts()
@@ -67,18 +112,6 @@ class BlueSkyFeedScroller
         ));
     }
 
-    public function add_plugin_page()
-    {
-        add_menu_page(
-            'BlueSky Feed Settings',
-            'BlueSky Feed',
-            'manage_options',
-            'bluesky-feed-settings',
-            array($this, 'create_admin_page'),
-            'dashicons-share'
-        );
-    }
-
     public function handle_clear_cache()
     {
         check_ajax_referer('clear_bluesky_cache', 'security');
@@ -90,7 +123,7 @@ class BlueSkyFeedScroller
         $this->options = get_option('bluesky_feed_options');
         ?>
         <div class="wrap">
-            <h1>BlueSky Feed Settings</h1>
+            <h1><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#000000" viewBox="0 0 512 512"><path d="M111.8 62.2C170.2 105.9 233 194.7 256 242.4c23-47.6 85.8-136.4 144.2-180.2c42.1-31.6 110.3-56 110.3 21.8c0 15.5-8.9 130.5-14.1 149.2C478.2 298 412 314.6 353.1 304.5c102.9 17.5 129.1 75.5 72.5 133.5c-107.4 110.2-154.3-27.6-166.3-62.9l0 0c-1.7-4.9-2.6-7.8-3.3-7.8s-1.6 3-3.3 7.8l0 0c-12 35.3-59 173.1-166.3 62.9c-56.5-58-30.4-116 72.5-133.5C100 314.6 33.8 298 15.7 233.1C10.4 214.4 1.5 99.4 1.5 83.9c0-77.8 68.2-53.4 110.3-21.8z"/></svg> BlueSky Feed Settings</h1>
 
             <!-- How To Section -->
             <div class="card" style="max-width: 800px; margin-bottom: 20px;">
