@@ -429,12 +429,6 @@
     color: #999;
   }
 
-  .bluesky-nav-button {
-    background-color: #1a1a1a;
-    border-color: #333;
-    color: #e5e5e5;
-  }
-
   .bluesky-nav-button:hover:not(:disabled) {
     background-color: #333;
   }
