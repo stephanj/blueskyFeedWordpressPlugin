@@ -1,0 +1,425 @@
+/* Base container */
+.bluesky-feed-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Horizontal scroll layout */
+.bluesky-feed-container[data-scroll-direction="horizontal"] {
+  max-width: 100%;
+}
+
+.bluesky-feed-container[data-scroll-direction="horizontal"] .bluesky-feed-scroller {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
+  padding: 1rem 0;
+  -webkit-overflow-scrolling: touch;
+  height: auto;
+  max-height: 600px; /* Control maximum height */
+}
+
+
+.bluesky-feed-container[data-scroll-direction="horizontal"] .bluesky-post {
+  flex: 0 0 400px; /* Fixed width for horizontal posts */
+  max-height: 550px; /* Control post height */
+  overflow-y: auto; /* Allow scrolling within post if content is too long */
+  scroll-snap-align: start;
+  margin-bottom: 0;
+}
+
+/* Vertical scroll layout */
+.bluesky-feed-container[data-scroll-direction="vertical"] .bluesky-feed-scroller {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.bluesky-feed-container[data-scroll-direction="vertical"] .bluesky-post {
+  width: 100%;
+  margin-right: 0;
+}
+
+/* Navigation buttons positioning */
+.bluesky-feed-container[data-scroll-direction="horizontal"] .bluesky-nav-buttons {
+  position: sticky;
+  bottom: 1rem;
+  background: white;
+  padding: 0.5rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.bluesky-feed-container[data-scroll-direction="vertical"] .bluesky-nav-buttons {
+  position: static;
+  box-shadow: none;
+}
+
+/* Feed scroller */
+.bluesky-feed-scroller {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  padding: 1rem 0;
+}
+
+/* Scrollbar styling */
+.bluesky-feed-scroller::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bluesky-feed-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bluesky-feed-scroller::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Individual post */
+.bluesky-post {
+  background-color: white;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bluesky-post:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-color: #d1d5db;
+}
+
+/* Post header */
+.bluesky-post-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bluesky-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bluesky-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bluesky-display-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.bluesky-handle {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* Post content */
+.bluesky-post-content {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2937;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Links in post */
+.bluesky-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.bluesky-link:hover {
+  text-decoration: underline;
+}
+
+/* Mentions and hashtags */
+.bluesky-mention,
+.bluesky-hashtag {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.bluesky-mention:hover,
+.bluesky-hashtag:hover {
+  text-decoration: underline;
+}
+
+/* Images container */
+.bluesky-post-images {
+  margin-top: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* Single image */
+.bluesky-post-images:not(.bluesky-post-images-grid) .bluesky-image-wrapper {
+  position: relative;
+  width: 100%;
+  max-height: 500px;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: #f3f4f6;
+}
+
+/* Multiple images grid */
+.bluesky-post-images-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  max-height: 600px;
+}
+
+.bluesky-post-images-grid .bluesky-image-wrapper {
+  position: relative;
+  padding-bottom: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+/* Image styling */
+.bluesky-post-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.bluesky-image-wrapper:hover .bluesky-post-image {
+  transform: scale(1.03);
+}
+
+/* Loading state */
+.bluesky-post-image.lazy {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bluesky-post-image.loaded {
+  opacity: 1;
+}
+
+/* Post footer */
+.bluesky-post-footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bluesky-timestamp {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Navigation buttons */
+.bluesky-nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.bluesky-nav-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #374151;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bluesky-nav-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.bluesky-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.bluesky-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.bluesky-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f4f6;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error state */
+.bluesky-feed-error {
+  padding: 1rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  color: #991b1b;
+  margin: 1rem 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .bluesky-feed-container {
+    padding: 0.5rem;
+  }
+
+  .bluesky-post {
+    padding: 1rem;
+    min-height: 150px;
+  }
+
+  .bluesky-post-images:not(.bluesky-post-images-grid) .bluesky-image-wrapper {
+    max-height: 300px;
+  }
+
+  .bluesky-post-images-grid {
+    max-height: 400px;
+  }
+
+  .bluesky-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .bluesky-display-name {
+    font-size: 1rem;
+  }
+
+  .bluesky-handle {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .bluesky-post {
+    padding: 0.875rem;
+  }
+
+  .bluesky-post-images:not(.bluesky-post-images-grid) .bluesky-image-wrapper {
+    max-height: 250px;
+  }
+
+  .bluesky-post-images-grid {
+    max-height: 300px;
+  }
+
+  .bluesky-nav-buttons {
+    gap: 0.5rem;
+  }
+
+  .bluesky-nav-button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Accessibility improvements */
+.bluesky-nav-button:focus,
+.bluesky-post:focus-within {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .bluesky-feed-container {
+    max-width: 100%;
+  }
+
+  .bluesky-nav-buttons,
+  .bluesky-loading {
+    display: none;
+  }
+
+  .bluesky-post {
+    break-inside: avoid;
+    border: 1px solid #000;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .bluesky-post {
+    background-color: #1a1a1a;
+    border-color: #333;
+    color: #e5e5e5;
+  }
+
+  .bluesky-display-name {
+    color: #e5e5e5;
+  }
+
+  .bluesky-handle {
+    color: #999;
+  }
+
+  .bluesky-post-content {
+    color: #e5e5e5;
+  }
+
+  .bluesky-timestamp {
+    color: #999;
+  }
+
+  .bluesky-nav-button {
+    background-color: #1a1a1a;
+    border-color: #333;
+    color: #e5e5e5;
+  }
+
+  .bluesky-nav-button:hover:not(:disabled) {
+    background-color: #333;
+  }
+
+  .bluesky-image-wrapper {
+    background-color: #333;
+  }
+
+  .bluesky-feed-container[data-scroll-direction="horizontal"] .bluesky-nav-buttons {
+    background-color: #1a1a1a;
+  }
+}
