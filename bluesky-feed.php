@@ -173,12 +173,12 @@ class BlueSkyFeedScroller
                                     class="regular-text"
                                     style="margin-right: 10px;"
                                 >
+                                <p class="description">Enter your BlueSky password</p>
                                 <button type="button" id="test-bluesky-connection" class="button button-secondary">
                                     <span class="dashicons dashicons-superhero" style="margin-top: 4px;"></span>
                                     Test Connection
                                 </button>
                                 <span id="connection-result" style="margin-left: 10px; display: inline-block;"></span>
-                                <p class="description">Enter your BlueSky password</p>
                             </div>
                         </div>
                     </div>
