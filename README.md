@@ -179,10 +179,3 @@ Logs are stored in:
 ## 📄 License
 
 This project is licensed under the MIT - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Support
-
-For support:
-1. Check the [issues page](https://github.com/stephanj/blueskyFeedPlugin/issues)
-2. Create a new issue with detailed information about your problem
-3. Include WordPress version and PHP version in bug reports
