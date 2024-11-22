@@ -15,6 +15,21 @@ error_log("BlueSky Feed Plugin: Initializing...");
 
 if (!defined('ABSPATH')) exit;
 
+if (!defined('BLUESKY_CSS')) {
+	define('BLUESKY_CSS', 'css/bluesky-feed-v2.css');
+}
+
+add_action( 'wp_enqueue_scripts', function() {
+	$plugin_url = plugin_dir_url( __FILE__ );
+	wp_enqueue_style( 'style', $plugin_url . BLUESKY_CSS );
+});
+
+function bluesky_ajax_load_scripts() {
+	wp_enqueue_script("bluesky-js", plugin_dir_url(__FILE__) . 'js/bluesky-feed-v3.js');
+}
+
+add_action('wp_print_scripts', 'bluesky_ajax_load_scripts');
+
 class BlueSkyFeedScroller
 {
     private $options;
@@ -26,7 +41,6 @@ class BlueSkyFeedScroller
 		// Admin hooks
 		add_action('admin_menu', array($this, 'add_plugin_page'));
 		add_action('admin_init', array($this, 'page_init'));
-		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
 
 		// Frontend hooks
 		add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
@@ -37,9 +51,6 @@ class BlueSkyFeedScroller
 		add_action('wp_ajax_nopriv_load_more_bluesky_posts', array($this, 'ajax_load_more_posts'));
 		add_action('wp_ajax_clear_bluesky_cache', array($this, 'handle_clear_cache'));
 
-        // Dash icons for next/prev buttons
-		wp_enqueue_style( 'dashicons' );
-
         // The shortcode
 		add_shortcode('bluesky_feed', array($this, 'render_feed_shortcode'));
 	}
@@ -49,6 +60,7 @@ class BlueSkyFeedScroller
 
 		// Only enqueue if shortcode is present
 		if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'bluesky_feed')) {
+			wp_enqueue_style('dashicons');  // Move here
 			wp_enqueue_style('bluesky-feed-style', plugins_url('css/bluesky-feed-v2.css', __FILE__));
 			wp_enqueue_script('bluesky-feed-script', plugins_url('js/bluesky-feed-v3.js', __FILE__),
 				array('jquery'), '1.0.0', true);
@@ -133,12 +145,15 @@ class BlueSkyFeedScroller
         $hashtags = array_map('trim', $hashtags);
 
         // Fetch posts with pagination
-        $posts = $this->fetch_bluesky_posts($accounts, $hashtags, $page);
-
-        wp_send_json_success(array(
-            'posts' => $posts,
-            'hasMore' => count($posts) > 0
-        ));
+	    try {
+		    $posts = $this->fetch_bluesky_posts(array(), $hashtags, $page);
+		    wp_send_json_success(array(
+			    'posts' => $posts,
+			    'hasMore' => count($posts) >= 20 // Based on limit
+		    ));
+	    } catch (Exception $e) {
+		    wp_send_json_error($e->getMessage());
+	    }
     }
 
     public function handle_clear_cache()
@@ -251,6 +266,8 @@ class BlueSkyFeedScroller
                             </div>
                         </div>
                     </div>
+
+                    <?php $this->footer_account_callback() ?>
 
                     <!-- Layout Settings Section -->
                     <div class="form-section" style="margin-top: 30px;">
@@ -525,6 +542,22 @@ class BlueSkyFeedScroller
 		    'bluesky-feed-settings',
 		    'bluesky_blacklist_section'
 	    );
+
+	    // Footer section
+	    add_settings_section(
+		    'bluesky_footer_section',
+		    'Footer Settings',
+		    array($this, 'footer_section_info'),
+		    'bluesky-feed-settings'
+	    );
+
+	    add_settings_field(
+		    'footer_account',
+		    'Footer Account Handle',
+		    array($this, 'footer_account_callback'),
+		    'bluesky-feed-settings',
+		    'bluesky_footer_section'
+	    );
     }
 
     public function layout_section_info() {
@@ -544,6 +577,24 @@ class BlueSkyFeedScroller
             <p class="description">Choose how posts will be displayed and scrolled</p>
         <?php
     }
+
+	public function footer_section_info() {
+		echo 'Configure the footer display settings:';
+	}
+
+	public function footer_account_callback() {
+		$value = isset($this->options['footer_account']) ? esc_attr($this->options['footer_account']) : '';
+		?>
+        <label>
+            <input type="text"
+                   name="bluesky_feed_options[footer_account]"
+                   value="<?php echo $value; ?>"
+                   class="regular-text"
+                   placeholder="e.g., your.bsky.social">
+        </label>
+        <p class="description">Enter your Bluesky handle to display in the footer (leave empty to hide footer)</p>
+		<?php
+	}
 
 	public function blacklist_section_info() {
 		echo 'Enter BlueSky accounts to exclude from the feed (one per line):';
@@ -615,6 +666,9 @@ class BlueSkyFeedScroller
 	    if (isset($input['blacklisted_accounts']))
 		    $new_input['blacklisted_accounts'] = sanitize_textarea_field($input['blacklisted_accounts']);
 
+	    if (isset($input['footer_account']))
+		    $new_input['footer_account'] = sanitize_text_field($input['footer_account']);
+
 	    return $new_input;
     }
 
@@ -633,11 +687,14 @@ class BlueSkyFeedScroller
         <?php
     }
 
-	private function fetch_bluesky_posts($accounts, $hashtags)
-	{
+	private function fetch_bluesky_posts($accounts, $hashtags, $page = 1) {
+
 		$this->debug_log('Starting fetch_bluesky_posts');
 		$this->debug_log('Accounts:', $accounts);
 		$this->debug_log('Hashtags:', $hashtags);
+
+		$limit = 20; // Posts per page
+		$offset = ($page - 1) * $limit;
 
 		try {
 			error_log('BlueSky Feed: Fetching posts started');
@@ -959,6 +1016,17 @@ class BlueSkyFeedScroller
                     <span class="dashicons dashicons-arrow-right-alt2"></span>
                 </button>
             </div>';
+	        }
+
+	        // Add follow-us if account handle is set
+	        if (!empty($options['footer_account'])) {
+		        $handle = esc_html($options['footer_account']);
+		        $bluesky_url = 'https://bsky.app/profile/' . urlencode($handle);
+		        $output .= sprintf(
+			        '<div class="bluesky-feed-footer">Follow us @ <a href="%s" target="_blank" rel="noopener noreferrer">%s</a></div>',
+			        esc_url($bluesky_url),
+			        $handle
+		        );
 	        }
 
             $output .= '<div class="bluesky-feed-scroller">';

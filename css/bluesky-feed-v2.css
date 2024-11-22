@@ -56,7 +56,6 @@
   position: sticky;
   bottom: 1rem;
   background: white;
-  padding: 0.5rem;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -272,7 +271,6 @@
   display: flex;
   justify-content: center;
   gap: 1rem;
-  margin: 1rem 0;
 }
 
 .bluesky-nav-button {
@@ -311,6 +309,12 @@
   border-top-color: #2563eb;
   border-radius: 50%;
   animation: spinner 0.8s linear infinite;
+}
+
+.bluesky-feed-footer {
+  text-align: center;
+  color: #666;
+  font-size: 0.9em;
 }
 
 @keyframes spinner {
@@ -442,6 +446,6 @@
   }
 
   .bluesky-feed-container[data-scroll-direction="horizontal"] .bluesky-nav-buttons {
-    background-color: #1a1a1a;
+    background-color: transparent;
   }
 }

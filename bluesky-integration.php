@@ -243,6 +243,12 @@ class BlueSkyAPI {
                 return false;
             }
 
+	        $status = wp_remote_retrieve_response_code($response);
+	        if ($status !== 200) {
+		        $this->debug_log('Authentication failed with status: ' . $status);
+		        return false;
+	        }
+
             $body = json_decode(wp_remote_retrieve_body($response), true);
 
             if (!isset($body['accessJwt']) || !isset($body['refreshJwt'])) {
