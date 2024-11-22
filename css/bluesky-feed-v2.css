@@ -115,6 +115,9 @@
   gap: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
+  text-decoration: none !important;
+  color: inherit !important;
+
   flex: 0 0 auto;
   transform: translateZ(0);
   will-change: transform;
@@ -124,6 +127,7 @@
 .bluesky-post:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border-color: #d1d5db;
+  text-decoration: none !important;
 }
 
 /* Post header */

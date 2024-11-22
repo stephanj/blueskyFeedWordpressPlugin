@@ -12,10 +12,10 @@
         this.handleTouch();
       }
 
+      this.updateNavigationState();
       this.initLazyLoading();
       this.setupScrollHandling();
       this.loadInitialPosts();
-      this.updateNavigationState();
     }
 
     loadInitialPosts() {
@@ -95,17 +95,14 @@
 
     setupScrollHandling() {
       if (this.scrollDirection === 'horizontal') {
-        const prevButton = $('<button>')
-            .addClass('bluesky-nav-button prev')
-            .html('&larr;')
-            .on('click', () => this.scrollPosts('prev'));
+        // Find existing nav buttons instead of creating new ones
+        const prevButton = this.container.find('.bluesky-nav-button.prev');
+        const nextButton = this.container.find('.bluesky-nav-button.next');
 
-        const nextButton = $('<button>')
-            .addClass('bluesky-nav-button next')
-            .html('&rarr;')
-            .on('click', () => this.scrollPosts('next'));
+        // Attach click handlers to existing buttons
+        prevButton.on('click', () => this.scrollPosts('prev'));
+        nextButton.on('click', () => this.scrollPosts('next'));
 
-        this.container.append(prevButton, nextButton);
         this.updateNavigationState();
 
         this.scroller.on('scroll', () => {

@@ -20,6 +20,7 @@ class BlueSkyFeedScroller
     private $options;
 
     public function __construct() {
+	    wp_enqueue_style('dashicons');
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
         add_action('admin_head', array($this, 'add_menu_icon_styles'));
@@ -810,7 +811,7 @@ class BlueSkyFeedScroller
             'https://bsky.app';
     }
 
-    public function render_feed_shortcode($atts) {
+    public function render_feed_shortcode() {
         try {
             error_log('BlueSky Feed: Shortcode execution started');
 
@@ -854,6 +855,19 @@ class BlueSkyFeedScroller
                 '<div class="bluesky-feed-container" data-scroll-direction="%s">',
                 esc_attr($scroll_direction)
             );
+
+	        // Add navigation buttons at the top for horizontal view
+	        if ($scroll_direction === 'horizontal') {
+		        $output .= '
+            <div class="bluesky-nav-buttons">
+                <button class="bluesky-nav-button prev" aria-label="Previous posts">
+                    <span class="dashicons dashicons-arrow-left-alt2"></span>
+                </button>
+                <button class="bluesky-nav-button next" aria-label="Next posts">
+                    <span class="dashicons dashicons-arrow-right-alt2"></span>
+                </button>
+            </div>';
+	        }
 
             $output .= '<div class="bluesky-feed-scroller">';
 
