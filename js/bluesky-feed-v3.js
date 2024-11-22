@@ -9,11 +9,18 @@
       this.scrollDirection = this.container.data('scroll-direction') || 'horizontal';
       this.currentPage = 1;
       this.isLoading = false;
+      this.isScrolling = false;
       this.scrollTimeout = null;
-      this.touchStartX = 0;
-      this.touchStartY = 0;
-      this.scrollLeft = 0;
-      this.scrollTop = 0;
+
+      // Add hardware acceleration to the scroller
+      this.scroller.css({
+        '-webkit-transform': 'translateZ(0)',
+        '-moz-transform': 'translateZ(0)',
+        '-ms-transform': 'translateZ(0)',
+        '-o-transform': 'translateZ(0)',
+        'transform': 'translateZ(0)',
+        'will-change': 'scroll-position'
+      });
 
       this.init();
     }
@@ -59,43 +66,87 @@
     }
 
     scrollPosts(direction) {
-      if (this.scrollDirection !== 'horizontal') return;
+      if (this.isScrolling) return; // Prevent multiple scroll animations
+      this.isScrolling = true;
 
-      const scrollAmount = this.container.width() * 0.8;
-      const currentScroll = this.scroller.scrollLeft();
+      const scroller = this.scroller[0]; // Get DOM element for better performance
+      const containerWidth = this.container.width();
+      const scrollAmount = direction === 'next' ? containerWidth * 0.8 : -containerWidth * 0.8;
+      const startPosition = this.scrollDirection === 'horizontal' ? scroller.scrollLeft : scroller.scrollTop;
+      const startTime = performance.now();
+      const duration = 600; // Slightly faster for more responsive feel
 
-      const newScroll = direction === 'next'
-        ? currentScroll + scrollAmount
-        : currentScroll - scrollAmount;
+      const easeInOutCubic = (t) => {
+        return t < 0.5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      };
 
-      this.scroller.animate({
-        scrollLeft: newScroll
-      }, 300);
+      const animation = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeInOutCubic(progress);
+        const currentPosition = startPosition + (scrollAmount * eased);
+
+        if (this.scrollDirection === 'horizontal') {
+          scroller.scrollLeft = currentPosition;
+        } else {
+          scroller.scrollTop = currentPosition;
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(animation);
+        } else {
+          this.isScrolling = false;
+          this.updateNavigationState();
+        }
+      };
+
+      requestAnimationFrame(animation);
     }
 
     handleTouch() {
       this.scroller.on('touchstart', (e) => {
-        this.touchStartX = e.originalEvent.touches[0].pageX;
-        this.scrollLeft = this.scroller.scrollLeft();
+        if (this.scrollDirection === 'horizontal') {
+          this.touchStartX = e.originalEvent.touches[0].pageX;
+          this.scrollLeft = this.scroller.scrollLeft();
+        } else {
+          this.touchStartY = e.originalEvent.touches[0].pageY;
+          this.scrollTop = this.scroller.scrollTop();
+        }
       });
 
       this.scroller.on('touchmove', (e) => {
-        if (!this.touchStartX) return;
-
-        const touchX = e.originalEvent.touches[0].pageX;
-        const diff = this.touchStartX - touchX;
-        this.scroller.scrollLeft(this.scrollLeft + diff);
+        if (this.scrollDirection === 'horizontal') {
+          if (!this.touchStartX) return;
+          const touchX = e.originalEvent.touches[0].pageX;
+          const diff = this.touchStartX - touchX;
+          this.scroller.scrollLeft(this.scrollLeft + diff);
+        } else {
+          if (!this.touchStartY) return;
+          const touchY = e.originalEvent.touches[0].pageY;
+          const diff = this.touchStartY - touchY;
+          this.scroller.scrollTop(this.scrollTop + diff);
+        }
       });
 
       this.scroller.on('touchend', () => {
         this.touchStartX = null;
+        this.touchStartY = null;
       });
     }
 
     updateNavigationState() {
       const scroller = this.scroller[0];
-      const isAtStart = scroller.scrollLeft <= 0;
-      const isAtEnd = scroller.scrollLeft >= (scroller.scrollWidth - scroller.clientWidth - 10);
+      let isAtStart, isAtEnd;
+
+      if (this.scrollDirection === 'horizontal') {
+        isAtStart = scroller.scrollLeft <= 0;
+        isAtEnd = scroller.scrollLeft >= (scroller.scrollWidth - scroller.clientWidth - 10);
+      } else {
+        isAtStart = scroller.scrollTop <= 0;
+        isAtEnd = scroller.scrollTop >= (scroller.scrollHeight - scroller.clientHeight - 10);
+      }
 
       this.container.find('.bluesky-prev').prop('disabled', isAtStart);
       this.container.find('.bluesky-next').prop('disabled', isAtEnd);
@@ -301,6 +352,11 @@
       this.initLazyLoading();
     }
   }
+
+  $.easing.easeInOutCubic = function(x, t, b, c, d) {
+    if ((t/=d/2) < 1) return c/2*t*t*t + b;
+    return c/2*((t-=2)*t*t + 2) + b;
+  };
 
   // Initialize on document ready
   $(document).ready(function() {

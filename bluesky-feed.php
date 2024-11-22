@@ -409,7 +409,7 @@ class BlueSkyFeedScroller
 
         wp_enqueue_script(
             'bluesky-feed-script',
-            plugins_url('js/bluesky-feed-v2.js', __FILE__),
+            plugins_url('js/bluesky-feed-v3.js', __FILE__),
             array('jquery'),
             '1.0.0',
             true
@@ -581,11 +581,14 @@ class BlueSkyFeedScroller
     }
 
     private function format_post_content($text) {
-        // First decode ALL HTML entities
+        // First decode any HTML entities
         $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-        // Also try a second pass with a different decode function
         $text = wp_specialchars_decode($text, ENT_QUOTES);
+
+        // Fix the &#039; that appears as literal text (not as an entity)
+        $text = preg_replace('/\&\#039;/', "'", $text);  // Handle proper HTML entity
+        $text = preg_replace('/\#039;/', "'", $text);    // Handle the broken version
+        $text = preg_replace('/\&\#39;/', "'", $text);   // Handle another common variant
 
         // Now escape HTML, but preserve our formatted elements
         $text = esc_html($text);
@@ -604,9 +607,9 @@ class BlueSkyFeedScroller
             $text
         );
 
-        // Convert hashtags to blue text
+        // Convert hashtags to blue text (but ignore the #039 code)
         $text = preg_replace(
-            '/(#[0-9]+|#[\w-]+)/',
+            '/(#(?!039;)(?:[0-9]+|[\w-]+))/',
             '<span class="bluesky-hashtag">$1</span>',
             $text
         );
