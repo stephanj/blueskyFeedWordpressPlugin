@@ -21,7 +21,8 @@ https://github.com/user-attachments/assets/93808614-300b-4b49-9906-d3101ec95818
 ## ⚙️ Admin screen
 
 ![admin-1](https://github.com/user-attachments/assets/1e6f6cf4-3667-470e-9589-9a353ef3bc7a)
-![admin-2](https://github.com/user-attachments/assets/f2bdd753-2a57-4b5d-8220-91c7386a7133)
+<img width="1021" alt="admin-2" src="https://github.com/user-attachments/assets/cae8ad90-aa59-4121-b4b4-6899e7f11c92">
+
 
 ## 📋 Requirements
 
