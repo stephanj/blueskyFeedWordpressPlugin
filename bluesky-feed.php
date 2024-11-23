@@ -1,17 +1,18 @@
 <?php
 /**
- * Plugin Name: BlueSky Feed Scroller
- * Description: Display BlueSky posts
+ * Plugin Name: Bluesky Feeds
+ * Description: Display bluesky posts 🦋
  * Version: 1.0
  * Author: Stephan Janssen
+ * Author URI: https://bsky.app/profile/stephanjanssen.be
+ * License: GPL-2.0+
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  */
 
-ini_set('display_errors', 1);
-ini_set('error_reporting', E_ALL);
-// Force logging to a specific file in your plugin directory
-ini_set('error_log', dirname(__FILE__) . '/debug.log');
-// Use this for debugging
-error_log("BlueSky Feed Plugin: Initializing...");
+// Define plugin constants
+define('BLUESKY_FEED_VERSION', '1.0');
+define('BLUESKY_FEED_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('BLUESKY_FEED_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 if (!defined('ABSPATH')) exit;
 
@@ -71,25 +72,10 @@ class BlueSkyFeedScroller
 		}
 	}
 
-    private function debug_log($message, $data = null) {
-        $log_file = dirname(__FILE__) . '/debug.log';
-        $timestamp = date('Y-m-d H:i:s');
-
-        if ($data !== null) {
-            $message .= ' Data: ' . print_r($data, true);
-        }
-
-        file_put_contents(
-            $log_file,
-            "[$timestamp] $message\n",
-            FILE_APPEND
-        );
-    }
-
     public function add_plugin_page() {
         add_menu_page(
-            'BlueSky Feed Settings',
-            'BlueSky Feed',
+            'Bluesky Feed Settings',
+            'Bluesky Feed',
             'manage_options',
             'bluesky-feed-settings',
             array($this, 'create_admin_page'),
@@ -131,14 +117,15 @@ class BlueSkyFeedScroller
         $this->options = get_option('bluesky_feed_options');
         ?>
         <div class="wrap">
-            <h1><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#000000" viewBox="0 0 512 512"><path d="M111.8 62.2C170.2 105.9 233 194.7 256 242.4c23-47.6 85.8-136.4 144.2-180.2c42.1-31.6 110.3-56 110.3 21.8c0 15.5-8.9 130.5-14.1 149.2C478.2 298 412 314.6 353.1 304.5c102.9 17.5 129.1 75.5 72.5 133.5c-107.4 110.2-154.3-27.6-166.3-62.9l0 0c-1.7-4.9-2.6-7.8-3.3-7.8s-1.6 3-3.3 7.8l0 0c-12 35.3-59 173.1-166.3 62.9c-56.5-58-30.4-116 72.5-133.5C100 314.6 33.8 298 15.7 233.1C10.4 214.4 1.5 99.4 1.5 83.9c0-77.8 68.2-53.4 110.3-21.8z"/></svg> BlueSky Feed Settings</h1>
+            <h1><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#000000" viewBox="0 0 512 512"><path d="M111.8 62.2C170.2 105.9 233 194.7 256 242.4c23-47.6 85.8-136.4 144.2-180.2c42.1-31.6 110.3-56 110.3 21.8c0 15.5-8.9 130.5-14.1 149.2C478.2 298 412 314.6 353.1 304.5c102.9 17.5 129.1 75.5 72.5 133.5c-107.4 110.2-154.3-27.6-166.3-62.9l0 0c-1.7-4.9-2.6-7.8-3.3-7.8s-1.6 3-3.3 7.8l0 0c-12 35.3-59 173.1-166.3 62.9c-56.5-58-30.4-116 72.5-133.5C100 314.6 33.8 298 15.7 233.1C10.4 214.4 1.5 99.4 1.5 83.9c0-77.8 68.2-53.4 110.3-21.8z"/></svg>
+                Bluesky Feed Settings</h1>
 
             <!-- How To Section -->
             <div class="card" style="max-width: 800px; margin-bottom: 20px;">
                 <h2><span class="dashicons dashicons-info-outline" style="font-size: 24px; margin-right: 10px;"></span>Quick Start Guide</h2>
-                <p>Follow these steps to set up your BlueSky Feed:</p>
+                <p>Follow these steps to set up your Bluesky Feed:</p>
                 <ol style="list-style-type: decimal; margin-left: 20px;">
-                    <li>Enter your BlueSky credentials (email/handle and password)</li>
+                    <li>Enter your Bluesky credentials (email/handle and password)</li>
                     <li>Add hashtags you want to track (without the # symbol)</li>
                     <li>Click "Test Connection" to verify your credentials</li>
                     <li>Choose your preferred scroll direction (horizontal or vertical)</li>
@@ -156,7 +143,7 @@ class BlueSkyFeedScroller
                         <div class="form-table">
                             <div class="form-field" style="margin-bottom: 20px;">
                                 <label for="bluesky_identifier" style="display: block; margin-bottom: 5px; font-weight: bold;">
-                                    BlueSky Identifier (email/handle)
+                                    Bluesky Identifier (email/handle)
                                 </label>
                                 <input
                                     type="text"
@@ -166,12 +153,12 @@ class BlueSkyFeedScroller
                                     class="regular-text"
                                     style="margin-right: 10px;"
                                 >
-                                <p class="description">Enter your BlueSky email or handle (e.g., user.bsky.social)</p>
+                                <p class="description">Enter your Bluesky email or handle (e.g., user.bsky.social)</p>
                             </div>
 
                             <div class="form-field" style="margin-bottom: 20px;">
                                 <label for="bluesky_password" style="display: block; margin-bottom: 5px; font-weight: bold;">
-                                    BlueSky Password
+                                    Bluesky Password
                                 </label>
                                 <input
                                     type="password"
@@ -181,7 +168,7 @@ class BlueSkyFeedScroller
                                     class="regular-text"
                                     style="margin-right: 10px;"
                                 >
-                                <p class="description">Enter your BlueSky password, make sure to use an App Password from https://bsky.app/settings/app-passwords</p>
+                                <p class="description">Enter your Bluesky password, make sure to use an App Password from https://bsky.app/settings/app-passwords</p>
                                 <button type="button" id="test-bluesky-connection" class="button button-secondary">
                                     <span class="dashicons dashicons-superhero" style="margin-top: 4px;"></span>
                                     Test Connection
@@ -265,7 +252,7 @@ class BlueSkyFeedScroller
             <!-- Cache Control Section -->
             <div class="card" style="max-width: 800px; margin-top: 20px;">
                 <h2><span class="dashicons dashicons-performance" style="font-size: 24px; margin-right: 10px;"></span>Cache Management</h2>
-                <p>Clear the BlueSky cache if you're experiencing issues with the feed or after changing settings:</p>
+                <p>Clear the Bluesky cache if you're experiencing issues with the feed or after changing settings:</p>
                 <button type="button" id="clear-bluesky-cache" class="button button-secondary">
                     <span class="dashicons dashicons-trash" style="margin-top: 4px;"></span>
                     Clear Cache
@@ -276,7 +263,7 @@ class BlueSkyFeedScroller
             <!-- Shortcode Help Section -->
             <div class="card" style="max-width: 800px; margin-top: 20px;">
                 <h2><span class="dashicons dashicons-shortcode" style="font-size: 24px; margin-right: 10px;"></span>Using the Shortcode</h2>
-                <p>To display the BlueSky feed on any page or post, use this shortcode:</p>
+                <p>To display the Bluesky feed on any page or post, use this shortcode:</p>
                 <code style="background: #f0f0f1; padding: 10px; display: inline-block; margin: 10px 0;">[bluesky_feed]</code>
             </div>
 
@@ -334,7 +321,7 @@ class BlueSkyFeedScroller
                         type: 'POST',
                         data: {
                             action: 'test_bluesky_connection',
-                            security: '<?php echo wp_create_nonce('bluesky_test_connection'); ?>'
+                            security: '<?php echo esc_js(wp_create_nonce('bluesky_test_connection')); ?>'
                         },
                         success: function (response) {
                             if (response.success) {
@@ -362,7 +349,7 @@ class BlueSkyFeedScroller
                         type: 'POST',
                         data: {
                             action: 'clear_bluesky_cache',
-                            security: '<?php echo wp_create_nonce('clear_bluesky_cache'); ?>'
+                            security: '<?php echo esc_js(wp_create_nonce('clear_bluesky_cache')); ?>'
                         },
                         success: function (response) {
                             if (response.success) {
@@ -381,16 +368,12 @@ class BlueSkyFeedScroller
 
     public function handle_test_connection()
     {
-        error_log('BlueSky Test Connection Started');
-
         if (!check_ajax_referer('bluesky_test_connection', 'security', false)) {
-            error_log('BlueSky Test: Nonce verification failed');
             wp_send_json_error('Invalid security token');
             return;
         }
 
         $options = get_option('bluesky_feed_options');
-        error_log('BlueSky Test: Options retrieved: ' . print_r($options, true));
 
         // Verify nonce
         if (!check_ajax_referer('bluesky_test_connection', 'security', false)) {
@@ -409,7 +392,7 @@ class BlueSkyFeedScroller
 
         // Check if credentials are set
         if (empty($options['bluesky_identifier']) || empty($options['bluesky_password'])) {
-            wp_send_json_error('BlueSky credentials are not configured');
+            wp_send_json_error('Bluesky credentials are not configured');
             return;
         }
 
@@ -438,14 +421,14 @@ class BlueSkyFeedScroller
         // Authentication fields remain the same
         add_settings_section(
             'bluesky_auth_section',
-            'BlueSky Authentication',
+            'Bluesky Authentication',
             array($this, 'auth_section_info'),
             'bluesky-feed-settings'
         );
 
         add_settings_field(
             'bluesky_identifier',
-            'BlueSky Identifier',
+            'Bluesky Identifier',
             array($this, 'identifier_callback'),
             'bluesky-feed-settings',
             'bluesky_auth_section'
@@ -453,7 +436,7 @@ class BlueSkyFeedScroller
 
         add_settings_field(
             'bluesky_password',
-            'BlueSky Password',
+            'Bluesky Password',
             array($this, 'password_callback'),
             'bluesky-feed-settings',
             'bluesky_auth_section'
@@ -525,7 +508,7 @@ class BlueSkyFeedScroller
     }
 
     public function layout_section_info() {
-        echo 'Configure the layout of your BlueSky feed:';
+        echo 'Configure the layout of your Bluesky feed:';
     }
 
     public function scroll_direction_callback() {
@@ -552,7 +535,7 @@ class BlueSkyFeedScroller
         <label>
             <input type="text"
                    name="bluesky_feed_options[footer_account]"
-                   value="<?php echo $value; ?>"
+                   value="<?php echo esc_attr($value); ?>"
                    class="regular-text"
                    placeholder="e.g., your.bsky.social">
         </label>
@@ -561,7 +544,7 @@ class BlueSkyFeedScroller
 	}
 
 	public function blacklist_section_info() {
-		echo 'Enter BlueSky accounts to exclude from the feed (one per line):';
+		echo 'Enter Bluesky accounts to exclude from the feed (one per line):';
 	}
 
 	public function blacklisted_accounts_callback() {
@@ -571,7 +554,7 @@ class BlueSkyFeedScroller
                     name="bluesky_feed_options[blacklisted_accounts]"
                     rows="5"
                     cols="50"
-                    placeholder="Enter handles to blacklist (one per line)"><?php echo $value; ?></textarea>
+                    placeholder="Enter handles to blacklist (one per line)"><?php echo esc_attr($value); ?></textarea>
         </label>
         <p class="description">Posts from these accounts will be excluded from your feed</p>
 		<?php
@@ -579,7 +562,7 @@ class BlueSkyFeedScroller
 
 	public function auth_section_info()
     {
-        echo 'Enter your BlueSky authentication credentials:';
+        echo 'Enter your Bluesky authentication credentials:';
     }
 
     public function identifier_callback()
@@ -590,10 +573,10 @@ class BlueSkyFeedScroller
         <label>
             <input type="text"
                    name="bluesky_feed_options[bluesky_identifier]"
-                   value="<?php echo $value; ?>"
+                   value="<?php echo esc_attr($value); ?>"
                    class="regular-text">
         </label>
-        <p class="description">Enter your BlueSky email or handle</p>
+        <p class="description">Enter your Bluesky email or handle</p>
         <?php
     }
 
@@ -605,10 +588,10 @@ class BlueSkyFeedScroller
         <label>
             <input type="password"
                    name="bluesky_feed_options[bluesky_password]"
-                   value="<?php echo $value; ?>"
+                   value="<?php echo esc_attr($value); ?>"
                    class="regular-text">
         </label>
-        <p class="description">Enter your BlueSky password</p>
+        <p class="description">Enter your Bluesky password</p>
         <?php
     }
 
@@ -638,14 +621,14 @@ class BlueSkyFeedScroller
 
     public function section_info()
     {
-        echo 'Enter your BlueSky feed settings below:';
+        echo esc_attr('Enter your Bluesky feed settings below:');
     }
 
     public function hashtags_callback()
     {
         $value = isset($this->options['hashtags']) ? esc_attr($this->options['hashtags']) : ''; ?>
         <label>
-            <textarea name="bluesky_feed_options[hashtags]" rows="5" cols="50"><?php echo $value; ?></textarea>
+            <textarea name="bluesky_feed_options[hashtags]" rows="5" cols="50"><?php echo esc_attr($value); ?></textarea>
         </label>
         <p class="description">Enter hashtags to track (one per line, without #)</p>
         <?php
@@ -653,22 +636,15 @@ class BlueSkyFeedScroller
 
 	private function fetch_bluesky_posts($accounts, $hashtags, $page = 1) {
 
-		$this->debug_log('Starting fetch_bluesky_posts');
-		$this->debug_log('Accounts:', $accounts);
-		$this->debug_log('Hashtags:', $hashtags);
-
 		$limit = 20; // Posts per page
 		$offset = ($page - 1) * $limit;
 
 		try {
-			error_log('BlueSky Feed: Fetching posts started');
-
 			require_once plugin_dir_path(__FILE__) . 'bluesky-integration.php';
 			$api = new BlueSkyAPI();
 
 			if (!$api->authenticate()) {
-				error_log('BlueSky Feed: Authentication failed');
-				throw new Exception('Failed to authenticate with BlueSky');
+				throw new Exception('Failed to authenticate with Bluesky');
 			}
 
 			$posts = array();
@@ -677,14 +653,12 @@ class BlueSkyFeedScroller
 			$blacklisted_accounts = array();
 			if (isset($this->options['blacklisted_accounts'])) {
 				$blacklisted_accounts = array_map('trim', explode("\n", $this->options['blacklisted_accounts']));
-				$blacklisted_accounts = array_filter($blacklisted_accounts); // Remove empty lines
-				$this->debug_log('Blacklisted accounts:', $blacklisted_accounts);
+				$blacklisted_accounts = array_filter($blacklisted_accounts);
 			}
 
 			// Fetch posts for each account
 			foreach ($accounts as $account) {
 				if (!empty($account)) {
-					error_log('BlueSky Feed: Fetching posts for account: ' . $account);
 					$account_posts = $api->get_user_posts($account);
 					$posts = array_merge($posts, $account_posts);
 				}
@@ -693,7 +667,6 @@ class BlueSkyFeedScroller
 			// Fetch posts for each hashtag
 			foreach ($hashtags as $hashtag) {
 				if (!empty($hashtag)) {
-					error_log('BlueSky Feed: Fetching posts for hashtag: ' . $hashtag);
 					$hashtag_posts = $api->search_posts($hashtag);
 					$posts = array_merge($posts, $hashtag_posts);
 				}
@@ -707,16 +680,12 @@ class BlueSkyFeedScroller
 					$author_handle = $post['author']['handle'];
 					foreach ($blacklisted_accounts as $blacklisted) {
 						$blacklisted = trim($blacklisted);
-						$this->debug_log('Comparing blacklisted account: \"' . $blacklisted . '\" with post author: \"' . $author_handle . '\"');
 						if (strcasecmp($author_handle, $blacklisted) === 0) {
-							$this->debug_log('Filtering out post from blacklisted account:', $author_handle);
 							return false;
 						}
 					}
 					return true;
 				});
-			} else {
-				$this->debug_log('No blacklisted accounts found');
 			}
 
 			// Sort posts by date (latest first)
@@ -726,11 +695,9 @@ class BlueSkyFeedScroller
 				return $date_b - $date_a; // Reverse chronological order
 			});
 
-			error_log('BlueSky Feed: Total posts fetched after filtering: ' . count($posts));
 			return array_values($posts); // Reset array keys after filtering
 
 		} catch (Exception $e) {
-			error_log('BlueSky Feed Error in fetch_bluesky_posts: ' . $e->getMessage());
 			throw $e;
 		}
 	}
@@ -738,7 +705,6 @@ class BlueSkyFeedScroller
     private function render_post($post) {
         try {
             if (!isset($post['author']) || !isset($post['text'])) {
-                error_log('BlueSky Feed: Invalid post data: ' . print_r($post, true));
                 return '';
             }
 
@@ -841,7 +807,6 @@ class BlueSkyFeedScroller
             return $output;
 
         } catch (Exception $e) {
-            error_log('BlueSky Feed Error in render_post: ' . $e->getMessage());
             return '';
         }
     }
@@ -884,7 +849,7 @@ class BlueSkyFeedScroller
     }
 
     private function format_timestamp($timestamp) {
-        $now = current_time('timestamp');
+        $now = current_time('timestamp', true); // Get GMT timestamp
         $diff = $now - $timestamp;
 
         if ($diff < 60) {
@@ -899,7 +864,7 @@ class BlueSkyFeedScroller
             $days = floor($diff / 86400);
             return $days . 'd';
         } else {
-            return date('M j', $timestamp);
+            return gmdate('M j', $timestamp);
         }
     }
 
@@ -926,13 +891,11 @@ class BlueSkyFeedScroller
 
     public function render_feed_shortcode() {
         try {
-            error_log('BlueSky Feed: Shortcode execution started');
-
             // Get settings
             $options = get_option('bluesky_feed_options');
 
             if (empty($options['bluesky_identifier']) || empty($options['bluesky_password'])) {
-                return '<div class="bluesky-feed-error">BlueSky credentials not configured</div>';
+                return '<div class="bluesky-feed-error">Bluesky credentials not configured</div>';
             }
 
             $accounts = isset($options['accounts']) ? explode("\n", $options['accounts']) : array();
@@ -947,7 +910,6 @@ class BlueSkyFeedScroller
             try {
                 $posts = $this->fetch_bluesky_posts($accounts, $hashtags);
             } catch (Exception $e) {
-                error_log('BlueSky Feed: First attempt failed, trying again with force authentication');
                 // Force new authentication and try again
                 require_once plugin_dir_path(__FILE__) . 'bluesky-integration.php';
                 $api = new BlueSkyAPI();
@@ -1009,7 +971,6 @@ class BlueSkyFeedScroller
             return $output;
 
         } catch (Exception $e) {
-            error_log('BlueSky Feed Error: ' . $e->getMessage());
             return '<div class="bluesky-feed-error">Error loading feed: ' . esc_html($e->getMessage()) . '</div>';
         }
     }

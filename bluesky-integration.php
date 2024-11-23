@@ -9,18 +9,6 @@ class BlueSkyAPI {
         $this->loadStoredToken();
     }
 
-    private function debug_log($message, $data = null) {
-        $log_file = dirname(__FILE__) . '/debug.log';
-        $timestamp = date('Y-m-d H:i:s');
-
-        $formatted_message = "[$timestamp] $message";
-        if ($data !== null) {
-            $formatted_message .= "\n" . print_r($data, true);
-        }
-
-        file_put_contents($log_file, $formatted_message . "\n", FILE_APPEND);
-    }
-
     private function loadStoredToken() {
         $stored_token = get_transient('bluesky_auth_token');
         if ($stored_token) {
@@ -45,11 +33,8 @@ class BlueSkyAPI {
 
     public function get_user_posts($handle) {
         try {
-            $this->debug_log('Getting posts for handle: ' . $handle);
-
             $did = $this->resolve_handle($handle);
             if (!$did) {
-                $this->debug_log('Could not resolve handle: ' . $handle);
                 return array();
             }
 
@@ -64,30 +49,14 @@ class BlueSkyAPI {
             ));
 
             if (is_wp_error($response)) {
-                $this->debug_log('API Error: ' . $response->get_error_message());
                 return array();
             }
 
             $body = json_decode(wp_remote_retrieve_body($response), true);
-            $this->debug_log('Raw API Response:', $body);
-
-            // Debug each post's embed structure
-            if (isset($body['feed'])) {
-                foreach ($body['feed'] as $index => $post) {
-                    if (isset($post['record'])) {
-                        $this->debug_log("Post $index embed structure:", [
-                            'record' => $post['record'],
-                            'embed' => isset($post['embed']) ? $post['embed'] : 'No embed',
-                            'post_view' => $post
-                        ]);
-                    }
-                }
-            }
 
             return $this->format_posts($body['feed']);
 
         } catch (Exception $e) {
-            $this->debug_log('Error in get_user_posts: ' . $e->getMessage());
             return array();
         }
     }
@@ -111,7 +80,6 @@ class BlueSkyAPI {
             $body = json_decode(wp_remote_retrieve_body($response), true);
             return $this->format_posts($body['posts']);
         } catch (Exception $e) {
-            error_log('BlueSky API Error in get_user_posts: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -132,8 +100,6 @@ class BlueSkyAPI {
     }
 
     private function extract_images($post) {
-        $this->debug_log('Extracting images from post:', $post);
-
         $images = array();
 
         // Check for embedded images in the post record
@@ -144,7 +110,6 @@ class BlueSkyAPI {
             if (isset($embed['images'])) {
                 foreach ($embed['images'] as $img) {
                     if (isset($img['fullsize'])) {
-                        $this->debug_log('Found direct embed fullsize image:', $img['fullsize']);
                         $images[] = $img['fullsize'];
                     }
                 }
@@ -154,7 +119,6 @@ class BlueSkyAPI {
             if (isset($embed['media']) && isset($embed['media']['images'])) {
                 foreach ($embed['media']['images'] as $img) {
                     if (isset($img['fullsize'])) {
-                        $this->debug_log('Found media embed fullsize image:', $img['fullsize']);
                         $images[] = $img['fullsize'];
                     }
                 }
@@ -162,7 +126,6 @@ class BlueSkyAPI {
 
             // Case 3: External media with images
             if (isset($embed['external']) && isset($embed['external']['thumb'])) {
-                $this->debug_log('Found external thumb image:', $embed['external']['thumb']);
                 $images[] = $embed['external']['thumb'];
             }
 
@@ -171,7 +134,6 @@ class BlueSkyAPI {
                 if (isset($embed['images'])) {
                     foreach ($embed['images'] as $img) {
                         if (isset($img['fullsize'])) {
-                            $this->debug_log('Found record media image:', $img['fullsize']);
                             $images[] = $img['fullsize'];
                         }
                     }
@@ -179,7 +141,6 @@ class BlueSkyAPI {
             }
         }
 
-        $this->debug_log('Extracted images:', $images);
         return array_values(array_unique(array_filter($images)));
     }
 
@@ -187,12 +148,8 @@ class BlueSkyAPI {
         $formatted = array();
 
         foreach ($posts as $post) {
-            $this->debug_log('Formatting post:', $post);
-
             // Get images from the post
             $images = $this->extract_images($post);
-            $this->debug_log('Extracted images for post:', $images);
-
             $formatted_post = array(
                 'text' => isset($post['record']['text']) ?
                     html_entity_decode($post['record']['text'], ENT_QUOTES | ENT_HTML5, 'UTF-8') : '',
@@ -223,7 +180,6 @@ class BlueSkyAPI {
             $options = get_option('bluesky_feed_options');
 
             if (empty($options['bluesky_identifier']) || empty($options['bluesky_password'])) {
-                error_log('BlueSky API: Missing credentials');
                 return false;
             }
 
@@ -231,7 +187,7 @@ class BlueSkyAPI {
                 'headers' => array(
                     'Content-Type' => 'application/json',
                 ),
-                'body' => json_encode(array(
+                'body' => wp_json_encode(array(
                     'identifier' => $options['bluesky_identifier'],
                     'password' => $options['bluesky_password'],
                 )),
@@ -239,21 +195,17 @@ class BlueSkyAPI {
             ));
 
             if (is_wp_error($response)) {
-                error_log('BlueSky API Authentication Error: ' . $response->get_error_message());
                 return false;
             }
 
 	        $status = wp_remote_retrieve_response_code($response);
 	        if ($status !== 200) {
-		        $this->debug_log('Authentication failed with status: ' . $status);
 		        return false;
 	        }
 
             $body = json_decode(wp_remote_retrieve_body($response), true);
 
             if (!isset($body['accessJwt']) || !isset($body['refreshJwt'])) {
-                error_log('BlueSky API: Invalid authentication response');
-                error_log('Response: ' . print_r($body, true));
                 return false;
             }
 
@@ -262,7 +214,6 @@ class BlueSkyAPI {
             return true;
 
         } catch (Exception $e) {
-            error_log('BlueSky API Authentication Exception: ' . $e->getMessage());
             return false;
         }
     }
@@ -270,7 +221,7 @@ class BlueSkyAPI {
     private function ensureValidToken() {
         if (!$this->access_jwt || $this->token_expiry <= time()) {
             if (!$this->authenticate()) {
-                throw new Exception('Failed to authenticate with BlueSky');
+                throw new Exception('Failed to authenticate with Bluesky');
             }
         }
     }
