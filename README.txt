@@ -1,5 +1,5 @@
 === BlueSky Feeds ===
-Plugin Name: BlueSky Feeds
+Plugin Name: Bluesky Feeds
 Contributors: sjadevoxx
 Donate link: https://github.com/stephanj/blueskyFeedWordpressPlugin
 Tags: Bluesky, Feed, Wordpress, Plugin
@@ -10,11 +10,11 @@ Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The BlueSky Feed plugin allows you to show the latest BlueSky feed on your Wordpress site.
+The Bluesky Feed plugin allows you to show the latest Bluesky feed on your Wordpress site.
 
 == Description ==
 
-The BlueSky Feed plugin allows you to show the latest BlueSky feed on your Wordpress site.
+The Bluesky Feed plugin allows you to show the latest Bluesky feed on your Wordpress site.
 
 == Installation ==
 
@@ -26,7 +26,7 @@ e.g.
 
 2. Activate the plugin through the 'Plugins' screen in WordPress
 
-3. Provide the BlueSky credentials to retrieve posts
+3. Provide the Bluesky credentials to retrieve posts
 
 4. Add a hashtag to filter the posts
 
@@ -42,7 +42,7 @@ e.g.
 == Changelog ==
 
 = 1.0 =
-* First version of BlueSky Feed plugin
+* First version of Bluesky Feed plugin
 
 == Upgrade Notice ==
 * Not applicable
