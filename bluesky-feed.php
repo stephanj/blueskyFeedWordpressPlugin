@@ -16,7 +16,7 @@ error_log("BlueSky Feed Plugin: Initializing...");
 if (!defined('ABSPATH')) exit;
 
 if (!defined('BLUESKY_CSS')) {
-	define('BLUESKY_CSS', 'css/bluesky-feed-v2.css');
+	define('BLUESKY_CSS', 'css/bluesky-feed-v6.css');
 }
 
 add_action( 'wp_enqueue_scripts', function() {
@@ -60,7 +60,6 @@ class BlueSkyFeedScroller
 
 		// Only enqueue if shortcode is present
 		if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'bluesky_feed')) {
-			wp_enqueue_style('dashicons');  // Move here
 			wp_enqueue_style('bluesky-feed-style', plugins_url('css/bluesky-feed-v2.css', __FILE__));
 			wp_enqueue_script('bluesky-feed-script', plugins_url('js/bluesky-feed-v3.js', __FILE__),
 				array('jquery'), '1.0.0', true);
@@ -98,50 +97,15 @@ class BlueSkyFeedScroller
         );
     }
 
-    public function add_menu_icon_styles() {
-        ?>
-        <style>
-            /* Style the menu icon */
-            .toplevel_page_bluesky-feed-settings .wp-menu-image img {
-                width: 20px;
-                height: 20px;
-                padding: 7px 0;
-                opacity: 0.6;
-            }
-
-            /* Style for hover and active states */
-            .toplevel_page_bluesky-feed-settings:hover .wp-menu-image img,
-            .toplevel_page_bluesky-feed-settings.current .wp-menu-image img {
-                opacity: 1;
-            }
-
-            /* Fix for dark mode */
-            body.admin-color-light .toplevel_page_bluesky-feed-settings .wp-menu-image img path {
-                fill: #1d2327;
-            }
-            body.admin-color-dark .toplevel_page_bluesky-feed-settings .wp-menu-image img path {
-                fill: #ffffff;
-            }
-
-            /* Handle other admin color schemes */
-            .wp-admin .toplevel_page_bluesky-feed-settings .wp-menu-image img path {
-                fill: currentColor;
-            }
-        </style>
-        <?php
-    }
-
     public function ajax_load_more_posts()
     {
         check_ajax_referer('bluesky_feed_nonce', 'nonce');
 
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $options = get_option('bluesky_feed_options');
-        $accounts = isset($options['accounts']) ? explode("\n", $options['accounts']) : array();
         $hashtags = isset($options['hashtags']) ? explode("\n", $options['hashtags']) : array();
 
         // Clean up arrays
-        $accounts = array_map('trim', $accounts);
         $hashtags = array_map('trim', $hashtags);
 
         // Fetch posts with pagination
@@ -1010,10 +974,14 @@ class BlueSkyFeedScroller
 		        $output .= '
             <div class="bluesky-nav-buttons">
                 <button class="bluesky-nav-button prev" aria-label="Previous posts">
-                    <span class="dashicons dashicons-arrow-left-alt2"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" color="#00ff00" height="20" width="20">
+                        <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path>
+                    </svg>
                 </button>
                 <button class="bluesky-nav-button next" aria-label="Next posts">
-                    <span class="dashicons dashicons-arrow-right-alt2"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" color="#00ff00" height="20" width="20">
+                        <path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/>
+                    </svg>
                 </button>
             </div>';
 	        }

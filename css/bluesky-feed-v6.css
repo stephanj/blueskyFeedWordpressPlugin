@@ -29,6 +29,7 @@
   overflow-y: auto; /* Allow scrolling within post if content is too long */
   scroll-snap-align: start;
   margin-bottom: 0;
+  padding: 1rem;
 }
 
 /* Vertical scroll layout */
@@ -55,7 +56,7 @@
 .bluesky-feed-container[data-scroll-direction="horizontal"] .bluesky-nav-buttons {
   position: sticky;
   bottom: 1rem;
-  background: white;
+  background: transparent;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -102,18 +103,19 @@
 
 /* Individual post */
 .bluesky-post {
-  flex: 0 0 300px;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px; /* Ensure consistent height */
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin: 8px;
+  padding: 0;
   text-decoration: none;
   color: inherit;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-  box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-  border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.2s ease;
+  position: relative; /* Keep relative positioning */
+  width: 300px; /* Set consistent width */
 }
 
 .bluesky-post:hover {
@@ -161,7 +163,7 @@
   line-height: 1.5;
   color: #1f2937;
   overflow-wrap: break-word;
-  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* Links in post */
@@ -272,36 +274,56 @@
 }
 
 .bluesky-timestamp {
-  color: #6b7280;
   font-size: 0.875rem;
+  color: #666;
+  position: static;
+  margin-left: 0;
 }
 
 /* Navigation buttons */
 .bluesky-nav-buttons {
   display: flex;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: space-between;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 2;
+  pointer-events: none; /* Allow clicking through the container */
+  padding: 0 10px;
 }
 
 .bluesky-nav-button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  background-color: white;
-  color: #374151;
-  font-size: 1rem;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
+  pointer-events: auto; /* Re-enable clicking for buttons */
+  padding: 0;
 }
 
-.bluesky-nav-button:hover:not(:disabled) {
-  background-color: #f3f4f6;
-  border-color: #d1d5db;
+.bluesky-nav-button svg {
+  width: 20px;
+  height: 20px;
+  fill: #333;
+  transition: fill 0.2s ease;
 }
 
-.bluesky-nav-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.bluesky-nav-button:hover {
+  background: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bluesky-nav-button:hover svg {
+  fill: #0066cc;
 }
 
 /* Loading spinner */
